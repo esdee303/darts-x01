@@ -27,7 +27,6 @@ function deepClone(obj) {
 }
 
 // ---------- SETUP UI ----------
-/*
 function renderPlayerInputs(){
   const n = parseInt(el('numPlayers').value,10);
   const box = el('playerInputs');
@@ -37,7 +36,7 @@ function renderPlayerInputs(){
     d.innerHTML = `<label>Speler ${i+1}</label><input type="text" id="pname${i}" placeholder="Naam" value="">`;
     box.appendChild(d);
   }
-}*/
+}
 
 const numPlayers = 3;
 const targetSets = 3;
@@ -45,38 +44,38 @@ const legsPerSet = 3;
 const startingScore = 501;
 const pnames = ['Steven', 'Marc', 'Nicolas'];
 
-// el('numPlayers').addEventListener('change', renderPlayerInputs);
-// renderPlayerInputs();
+el('numPlayers').addEventListener('change', renderPlayerInputs);
+renderPlayerInputs();
 
-/*el('demoBtn').addEventListener('click', ()=> {
+el('demoBtn').addEventListener('click', ()=> {
   const names = ['Speler A','Speler B','Speler C','Speler D'];
   const n = parseInt(el('numPlayers').value,10);
   for (let i = 0; i < n; i++) el(`pname${i}`).value = names[i];
-});*/
+});
 
 // start / nieuw / undo knoppen
-// el('startBtn').addEventListener('click', startGame);
+el('startBtn').addEventListener('click', startGame);
 el('newBtn').addEventListener('click', ()=> { location.reload(); });
 el('undoBtn').addEventListener('click', undo);
 
 
-startGame()
+
 
 // ---------- GAME LOGIC ----------
 function startGame() {
   state.players = [];
-  // const n = parseInt(el('numPlayers').value,10);
-  const n = numPlayers;
-  // state.targetSets = Math.max(1, parseInt(el('targetSets').value,10)||1);
-  state.targetSets = targetSets;
-  // state.legsPerSet = Math.max(1, parseInt(el('legsPerSet').value,10)||1);
-  state.legsPerSet = legsPerSet;
-  // state.startingScore = Math.max(101, parseInt(el('startingScore').value,10)||501);
-  state.startingScore = 501;
+  const n = parseInt(el('numPlayers').value,10);
+  // const n = numPlayers;
+  state.targetSets = Math.max(1, parseInt(el('targetSets').value,10)||1);
+  // state.targetSets = targetSets;
+  state.legsPerSet = Math.max(1, parseInt(el('legsPerSet').value,10)||1);
+  // state.legsPerSet = legsPerSet;
+  state.startingScore = Math.max(101, parseInt(el('startingScore').value,10)||501);
+  // state.startingScore = 501;
 
   for (let i = 0; i < n; i++) {
-    // const name = (el(`pname${i}`).value||`Speler ${i+1}`).trim();
-    const name = (pnames[i] || `Speler ${i + 1}`).trim();
+    const name = (el(`pname${i}`).value||`Speler ${i+1}`).trim();
+    // const name = (pnames[i] || `Speler ${i + 1}`).trim();
     state.players.push({
       name,
       score: state.startingScore,
@@ -445,13 +444,14 @@ function renderStats(){
       <td>${p.name}</td>
       <td>${a}</td>
       <td>${p.stats.checkouts} / ${p.stats.checkoutAttempts} (${co})</td>
-      <td>${f9}</td>
-      <td>${p.stats.totalDarts}</td>
-      <td>${p.stats.totalPoints}</td>`;
+      <td style="text-align: center;">${f9}</td>
+      <td style="text-align: center;">${p.stats.totalDarts}</td>
+      <td style="text-align: center;">${p.stats.totalPoints}</td>`;
     console.log(p)
     for (let [range, val] of Object.entries(p.visitDist)) {
       console.log(range)
       let td = document.createElement('td')
+      td.style.textAlign = 'center';
       td.innerHTML = val;
       tr.append(td);
     }

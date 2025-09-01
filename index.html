@@ -3,41 +3,41 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Darts 501 (Single-In, Double-Out)</title>
+    <title>Darts X01 (Single-In, Double-Out)</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <div class="wrap grid two">
+    <div class="wrap flex">
       <!-- Setup -->
-      <section class="panel" id="setup">
-        <h1>🟢 Start nieuw spel – 501 (SI/DO)</h1>
-        <div class="grid two">
-          <div>
-            <label for="numPlayers">Aantal spelers</label>
-            <select id="numPlayers">
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-            </select>
+      <section class="panel start-panel white-border fs18" id="setup">
+        <h1 class="white-border">🎯 X01 🎯</h1>
+        <div class="flex white-border">
+          <div class="centered white-border">
+            <label for="numPlayers" style="margin-bottom: .5rem;">Aantal spelers</label>
+            <input id="numPlayers" type="number" min="1" value="2" style="width: 6rem;"/>
           </div>
-          <div>
-            <label for="targetSets">Aantal sets (eerste tot)</label>
-            <input id="targetSets" type="number" min="1" value="1" />
+          <div class="centered white-border">
+            <label for="targetSets" style="margin-bottom: .5rem;">Aantal sets (eerste tot)</label>
+            <input id="targetSets" type="number" min="1" value="1" style="width: 6rem;"/>
           </div>
-          <div>
-            <label for="legsPerSet">Legs per set (eerste tot)</label>
-            <input id="legsPerSet" type="number" min="1" value="3" />
+          <div class="centered white-border">
+            <label for="legsPerSet" style="margin-bottom: .5rem;">Legs per set (eerste tot)</label>
+            <input id="legsPerSet" type="number" min="1" value="3" style="width: 6rem;"/>
           </div>
-          <div>
-            <label for="startingScore">Beginscore</label>
-            <input id="startingScore" type="number" min="101" value="501" />
+          <div class="centered white-border">
+            <label for="startingScore" style="margin-bottom: .5rem;">Beginscore</label>
+            <input id="startingScore" type="number" min="101" value="501" style="width: 8rem;"/>
           </div>
         </div>
-        <div style="margin-top: 8px">
-          <label>Spelers</label>
-          <div id="playerInputs" class="players"></div>
+        <div class="white-border" style="margin-top: 8px">
+          <h2>Spelers</h2>
+          <div id="playerInputs" class="players-menu"></div>
         </div>
-        <div class="row" style="margin-top: 10px">
+        <div class="row white-border" style="margin-top: 2rem">
           <button class="primary" id="startBtn">Start spel</button>
           <button class="ghost" id="demoBtn" title="Vul snel testnamen in">Demo namen</button>
         </div>
@@ -65,7 +65,7 @@
           <div id="throwButtons" class="throws" style="margin-top: 6px"></div>
         </div>
 
-        <div class="grid one" style="margin-top: 12px">
+        <div class="flex" style="margin-top: 12px">
           <div class="panel">
             <h3>📈 Statistieken</h3>
             <table id="statsTable"></table>
@@ -76,7 +76,7 @@
           </div>
         </div>
       </section>
-      <section class="dartsboard" id="dartsboard">
+      <section class="dartsboard" id="dartsboard" style="display: none">
          <svg
           version="1.1"
           id="svg2"
