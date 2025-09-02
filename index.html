@@ -8,36 +8,41 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="manifest" href="/site.webmanifest">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Cascadia+Code:ital,wght@0,200..700;1,200..700&family=Cascadia+Mono:ital,wght@0,200..700;1,200..700&family=Chivo+Mono:ital,wght@0,100..900;1,100..900&family=Cousine:ital,wght@0,400;0,700;1,400;1,700&family=Fira+Code:wght@300..700&family=Google+Sans+Code:ital,wght@0,300..800;1,300..800&family=IBM+Plex+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&family=IBM+Plex+Sans:ital,wght@0,100..700;1,100..700&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Manrope:wght@200..800&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Nata+Sans:wght@100..900&family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Overpass+Mono:wght@300..700&family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&family=Roboto+Flex:opsz,wght@8..144,100..1000&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&family=Roboto:ital,wght@0,100..900;1,100..900&family=Rubik:ital,wght@0,300..900;1,300..900&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Ubuntu+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Ubuntu+Sans+Mono:ital,wght@0,400..700;1,400..700&family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <div class="wrap flex">
       <!-- Setup -->
       <section class="panel start-panel white-border fs18" id="setup">
-        <h1 class="white-border">🎯 X01 🎯</h1>
-        <div class="flex white-border">
+        <div class="title">
+          <h1 class="white-border">X01 🎯</h1>
+        </div>
+        <div class="flex game-settings white-border">
           <div class="centered white-border">
-            <label for="numPlayers" style="margin-bottom: .5rem;">Aantal spelers</label>
+            <label for="numPlayers" style="margin-bottom: .5rem;">#️⃣ Spelers</label>
             <input id="numPlayers" type="number" min="1" value="2" style="width: 6rem;"/>
           </div>
           <div class="centered white-border">
-            <label for="targetSets" style="margin-bottom: .5rem;">Aantal sets (eerste tot)</label>
+            <label for="targetSets" style="margin-bottom: .5rem;">#️⃣ Sets</label>
             <input id="targetSets" type="number" min="1" value="1" style="width: 6rem;"/>
           </div>
           <div class="centered white-border">
-            <label for="legsPerSet" style="margin-bottom: .5rem;">Legs per set (eerste tot)</label>
+            <label for="legsPerSet" style="margin-bottom: .5rem;">#️⃣ Legs</label>
             <input id="legsPerSet" type="number" min="1" value="3" style="width: 6rem;"/>
           </div>
           <div class="centered white-border">
-            <label for="startingScore" style="margin-bottom: .5rem;">Beginscore</label>
+            <label for="startingScore" style="margin-bottom: .5rem;">🧮 Beginscore</label>
             <input id="startingScore" type="number" min="101" value="501" style="width: 8rem;"/>
           </div>
         </div>
-        <div class="white-border" style="margin-top: 8px">
+        <div class="title" style="margin-top: 8px">
           <h2>Spelers</h2>
-          <div id="playerInputs" class="players-menu"></div>
         </div>
-        <div class="row white-border" style="margin-top: 2rem">
+        <div class="player-names" id="playerInputs" ></div>
+        <div class="row white-border btns" style="margin-top: 2rem">
           <button class="primary" id="startBtn">Start spel</button>
           <button class="ghost" id="demoBtn" title="Vul snel testnamen in">Demo namen</button>
         </div>
@@ -64,13 +69,12 @@
           </div>
           <div id="throwButtons" class="throws" style="margin-top: 6px"></div>
         </div>
-
-        <div class="flex" style="margin-top: 12px">
+        <div class="flex flex-col" style="margin-top: 12px">
           <div class="panel">
             <h3>📈 Statistieken</h3>
             <table id="statsTable"></table>
           </div>
-          <div class="panel">
+          <div class="panel" style="margin-top: 12px">
             <h3>📝 Log</h3>
             <div id="log" class="log"></div>
           </div>

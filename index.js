@@ -3,6 +3,8 @@
 // helper
 const el = id => document.getElementById(id);
 
+const numbersAudio = ["0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46","47","48","49","50","51","52","53","54","55","56","57","58","59","60","61","62","63","64","65","66","67","68","69","70","71","72","73","74","75","76","77","78","79","80","81","82","83","84","85","86","87","88","89","90","91","92","93","94","95","96","97","98","99","100","101","102","103","104","105","106","107","108","109","110","111","112","113","114","115","116","117","118","119","120","121","122","123","124","125","126","127","128","129","130","131","132","133","134","135","136","137","138","139","140","141","142","143","144","145","146","147","148","149","150","151","152","153","154","155","156","157","158","159","160","161","162","163","164","165","166","167","168","169","170","171","172","173","174","175","176","177","178","179","180"]
+
 // ---------- STATE ----------
 const state = {
   players: [],
@@ -90,6 +92,8 @@ function startGame() {
         checkouts: 0,
       },
       dartsInCurrentLeg: 0,
+      visitScore: 0,  // Tijdelijke som van de huidige visit
+      dartsInLeg: 0, // Aantal pijlen gegooid in de lopende leg
       lastThrows: ['---','---','---'], // 3 slots voor live-visitntPlayer = 0;
       lastThrows: [], // strings zoals ['T20','D20','S19']
       lastVisit: 0,
@@ -104,7 +108,9 @@ function startGame() {
         "140-159": 0,
         "160-179": 0,
         "180": 0
-      }
+      },
+      bestLeg: null,
+      highestCheckout: null
     });
   }
 
@@ -168,6 +174,7 @@ function startTurn(){
   state.currentTurnHadCheckoutChance = (p.score <= 170 && p.score > 1);
   // reset zichtbare laatste 3 worpen bij start van de beurt
   p.lastThrows = ['---','---','---'];
+  p.visitScore = 0;
   
 }
 
@@ -204,8 +211,13 @@ function handleThrow(mult, value, btn){
     points = 0; 
   } // niet geldig in UI maar veilig afvangen
 
+
+
   // vul volgende vrije span in (--- -> label)
-  if (!Array.isArray(p.lastThrows) || p.lastThrows.length !== 3) p.lastThrows = ['---','---','---'];
+  if (!Array.isArray(p.lastThrows) || p.lastThrows.length !== 3) {
+    p.lastThrows = ['---','---','---'];
+  }
+    
   const _slot = p.lastThrows.findIndex(t => t === '---');
   if (_slot !== -1) p.lastThrows[_slot] = label;
 
@@ -217,6 +229,8 @@ function handleThrow(mult, value, btn){
   const bust = (after < 0) || (after === 1) || invalidFinish;
 
   state.currentTurnThrows.push({mult, value, points, label});
+  //  console.log(`state.currentTurnThrows = ${JSON.stringify(state.currentTurnThrows[0])}`)
+  //  console.log(`state.currentTurnThrows length = ${state.currentTurnThrows.length}`)
 
   if (bust) {
     log(`${p.name}: ${label} → BUST (score blijft ${state.turnStartScore})`);
@@ -229,11 +243,19 @@ function handleThrow(mult, value, btn){
   p.score = after;
   log(`${p.name}: ${label} → ${before} ⇒ ${p.score}`);
 
+  p.visitScore += points;  // Score optellen binnen de visit
+  p.dartsInLeg += 1   // Aantal gegooide pijlen in de leg
+
+  // console.log(`p.dartsInCurrentLeg = ${p.dartsInCurrentLeg}`)
   // finish
-  if(after === 0){
+  if (after === 0) {
+    let dartsToCheckout = p.dartsInCurrentLeg + state.currentTurnThrows.length
+    // console.log(dartsToCheckout);
     // visite stats: bezoekpunt is turnStartScore - after (after==0)
     endVisit({ visitScore: state.turnStartScore - after, dartsUsed: state.currentTurnThrows.length, busted:false, finished:true });
-    handleLegWin(state.currentPlayer);
+    // handleLegWin(state.currentPlayer, before);
+    
+    handleLegWin(state.currentPlayer, before, dartsToCheckout)
     return;
   }
 
@@ -265,6 +287,7 @@ function endVisit({visitScore, dartsUsed, busted, finished}){
   p.stats.firstNinePoints += pointsToAddFN;
   p.stats.firstNineDarts += dartsToAddFN;
   p.dartsInCurrentLeg += dartsUsed;
+  
 
   if(state.currentTurnHadCheckoutChance){
     p.stats.checkoutAttempts += 1;
@@ -274,6 +297,11 @@ function endVisit({visitScore, dartsUsed, busted, finished}){
   }
 
   let b = p.visitDist;
+
+  console.log(`audio/${numbersAudio[visitScore]}.wav`)
+  let audio = new Audio(`audio/${numbersAudio[visitScore]}.wav`);
+  audio.play();
+
   if (visitScore < 20) b["0-19"]++;
   else if (visitScore < 40) b["20-39"]++;
   else if (visitScore < 60) b["40-59"]++;
@@ -292,16 +320,32 @@ function endVisit({visitScore, dartsUsed, busted, finished}){
   state.currentTurnHadCheckoutChance = false;
 }
 
-function advanceTurn(){
+function advanceTurn() {
   state.currentPlayer = nextPlayerIndex(state.currentPlayer);
   startTurn();
   renderAll();
 }
 
-function handleLegWin(playerIndex){
+function handleLegWin(playerIndex, before, dartsToCheckout){
   const p = state.players[playerIndex];
   p.legs += 1;
   log(`🏁 Leg voor ${p.name}`);
+  
+  console.log(`Best Leg: ${p.bestLeg}`)
+  console.log(`Darts in current leg: ${dartsToCheckout}`)
+
+  if (p.bestLeg === null || dartsToCheckout < p.bestLeg) {
+    p.bestLeg = dartsToCheckout;
+  }
+
+  if (p.highestCheckout === null || before > p.highestCheckout) {
+    p.highestCheckout = before;
+  }
+
+  for (let player of state.players) {
+    player.visitScore = 0;
+    player.dartsInLeg = 0;
+  }
 
   if(p.legs >= state.legsPerSet){
     p.sets += 1;
@@ -379,11 +423,29 @@ function renderPlayersBoard() {
       <div class="sub" style="margin-top:8px">Laatste: ${last} · Laatste score: ${p.lastVisit} · Gemiddelde: ${avg}</div>
     `;*/
     d.innerHTML = `
-      <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:6px">
+      <div class="row" style="justify-content:space-between;align-items:center;">
         <div class="pill player-name"><strong>${p.name}</strong></div>
-        <div class="pill">Sets: <strong>${p.sets}</strong> · Legs: <strong>${p.legs}</strong></div>
+        <div class="pill sets-legs">
+          <span style="margin-right:.5rem;">S</span>
+          <span style="margin-right: 1rem; font-weight: 700;" id="sets">${p.sets}</span>
+          <span style="margin-right:.5rem;">L</span>
+          <span style="font-weight: 700;" id="legs">${p.legs}</span>
+        </div>
       </div>
-      <div class="score">${p.score}</div>
+      <div class="score">
+        <div class="cur">
+          <div class="cur-h">Current</div>
+				  <div class="cur-v" id="cur-v">${p.visitScore}</div>
+        </div>
+        <div class="arr">
+				  <div class="arr-h">Arrows</div>
+				  <div class="arr-v" id="arr-v">${p.dartsInLeg}</div>
+			  </div>
+        <div class="rem">
+          <div class="rem-h">Remain</div>
+				  <div class="rem-v" id="rem-v">${p.score}</div>
+        </div>
+      </div>
       <div class="sub">
         <div class="player-throws">
           <span>${last[0]}</span>
@@ -418,10 +480,11 @@ function renderStats(){
     <tr>
       <th>Speler</th>
       <th>AVG (3-dart)</th>
+      <th>First 9</th>
       <th>Checkout</th>
-      <th>First Nine Gem.</th>
-      <th>Darts</th>
-      <th>Punten</th>
+      <th>Max. Checkout</th>
+      <th>Best Leg</th>
+      <th>Total Darts</th>
       <th>180</th>
       <th>< 20</th>
       <th>< 40</th>
@@ -442,14 +505,15 @@ function renderStats(){
     
     tr.innerHTML = `
       <td>${p.name}</td>
-      <td>${a}</td>
-      <td>${p.stats.checkouts} / ${p.stats.checkoutAttempts} (${co})</td>
+      <td style="text-align: center;">${a}</td>
       <td style="text-align: center;">${f9}</td>
-      <td style="text-align: center;">${p.stats.totalDarts}</td>
-      <td style="text-align: center;">${p.stats.totalPoints}</td>`;
-    console.log(p)
+      <td>${p.stats.checkouts} / ${p.stats.checkoutAttempts} (${co})</td>
+      <td style="text-align: center;">${p.highestCheckout !== null ? p.highestCheckout : '-'}</td>
+      <td style="text-align: center;">${p.bestLeg !== null ? p.bestLeg : '-'}</td>
+      <td style="text-align: center;">${p.stats.totalDarts}</td>`;
+    
     for (let [range, val] of Object.entries(p.visitDist)) {
-      console.log(range)
+      // console.log(range)
       let td = document.createElement('td')
       td.style.textAlign = 'center';
       td.innerHTML = val;

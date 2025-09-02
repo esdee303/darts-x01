@@ -1,3 +1,5 @@
+
+
 :root {
   --bg: #13161b;
   --panel: #161b22;
@@ -9,10 +11,10 @@
   --blue: #388bfd;
 }
 
-
+/*
 .white-border {
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
-}
+}*/
 
 .fs18 {
   font-size: 1.5rem;
@@ -44,6 +46,10 @@ h3 {
 .flex {
   display: flex;
 }
+
+.flex.flex-col {
+  flex-direction: column;
+}
 /*
 .one {
   grid-template-columns: 1fr;  één kolom 
@@ -61,24 +67,65 @@ h3 {
   background: var(--panel);
   border: 1px solid #30363d;
   border-radius: 14px;
-  padding: 12px;
+  padding: 1rem 2rem 2rem 2rem;
+}
+
+.panel.start-panel {
+  margin: auto;
+  margin-top: 20rem;
+  font-family: "Inter", sans-serif;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  align-self: center;
+}
+
+.start-panel .title {
+  align-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.start-panel .player-names {
+  display: flex;
+}
+
+.start-panel .player-names div {
+  margin-right: 1rem;
+}
+
+.start-panel .btns {
+  align-self: center;
+}
+
+.start-panel .btns button {
+  font-family: "Inter", sans-serif;
+  width: 12rem;
+}
+
+.start-panel .btns button:not(:first-child) {
+  margin-left: 1rem;
+  border: 1px solid var(--text);
 }
 
 .player-panel {
-	background: var(--panel);
+	opacity: 0.7;
+  background: var(--panel);
 	border: 1px solid #30363d;
-	padding: 12px;
 	border-radius: 14px;
 	width: 30rem;
 	margin-left: 2rem;
 	margin-right: 2rem;
+	padding: 1rem;
 }
 
 label {
   display: block;
   margin: 0.4rem 0 0.2rem;
   color: var(--muted);
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+/*  border: 1px solid rgba(255, 255, 255, 0.2) !important;*/
 }
 
 input,
@@ -122,19 +169,11 @@ button.ghost {
 
 .row {
   display: flex;
-  gap: 10px;
   flex-wrap: wrap;
   align-items: center;
-  margin-left: 20px;
 }
 
-.start-panel {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
 
-}
 
 .centered {
   display: flex;
@@ -145,9 +184,6 @@ button.ghost {
 }
 
 .players {
- /* display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 8px;*/
   display: flex;
   justify-content: space-between;
 }
@@ -161,10 +197,8 @@ button.ghost {
 .pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  /*padding: 6px 10px;*/
   justify-content: center;
-  padding: 12px 20px;
+  padding: 1rem 2rem;
   border-radius: 999px;
   background: #0b1117;
   border: 1px solid #30363d;
@@ -172,29 +206,39 @@ button.ghost {
 
 .pill.player-name {
   width: 10rem;
+  text-transform: uppercase;
+	letter-spacing: .2rem;
+}
+
+.pill.sets-legs {
+  width: 10rem;
 }
 
 .current {
   outline: 2px solid var(--accent);
+  opacity: 1;
 }
 
 .score {
-  font-size: 60px;
+  font-size: 4rem;
   font-weight: 700;
   text-align: right;
-  margin-right: 1rem;
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	margin-top: 1rem;
 }
 
 .sub {
-  font-size: 20px;
+  font-size: 1.8rem;
   color: var(--muted);
   display: flex;
   justify-content: space-between;
+	align-items: center;
 }
 
 .player-throws {
-  font-size: 32px;
-  margin-bottom: 0.5rem;
+  font-size: 1.8rem;
 }
 
 .player-throws span:not(:first-child) {
@@ -202,23 +246,69 @@ button.ghost {
 }
 
 .player-avg {
-  width: 10rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+	
 }
 
 .player-avg-h {
-  text-align: right;
-  margin-left: 1rem;
+  margin-right: 1rem;
+  text-align: left;
+	width: 3rem;
+	
 }
 
 .player-avg-set {
-  margin-left: 1rem;
-  margin-right: 1rem;
-  text-align: left;
+  text-align: right;
   color: var(--accent);
+  width: 6rem;
 }
+
+.cur,
+.rem,
+.arr {
+	display: flex;
+}
+
+.rem {
+	flex-direction: column;
+	align-items: center;
+	justify-content: flex-start;
+}
+
+.cur,
+.arr {
+	width: 6rem;
+	color: #388bfd;
+	flex-direction: column;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.cur .cur-h,
+.rem .rem-h,
+.arr .arr-h{
+	font-size: 1rem;
+	text-align: center;
+}
+
+.cur .cur-v,
+.rem .rem-v,
+.arr .arr-v {
+  margin-top: -.5rem;
+	padding: 0;
+}
+
+.cur .cur-v,
+.arr .arr-v{
+	font-size: 2rem;
+}
+
+.rem {
+	width: 8rem;
+}
+
 
 .throws {
   display: grid;
