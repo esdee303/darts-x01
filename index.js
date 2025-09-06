@@ -1,7 +1,6 @@
 // Helper function
 const el = (id) => document.getElementById(id);
 
-
 // ---------- STATE ----------
 const state = {
   players: [],
@@ -54,22 +53,21 @@ el('newBtn').addEventListener('click', () => {
 el('undoBtn').addEventListener('click', undo);
 
 // ---------- GAME LOGIC ----------
-startGame()
+startGame();
 function startGame() {
   state.players = [];
 
   // - Variables to bypass the Start menu
-   const n = 3;
-   state.targetSets = 5;
-   state.legsPerSet = 5;
-   state.startingScore = 501;
-   const pnames = ['Steven', 'Marc', 'Nicolas']
+  const n = 3;
+  state.targetSets = 5;
+  state.legsPerSet = 5;
+  state.startingScore = 501;
+  const pnames = ['Steven', 'Marc', 'Nicolas'];
 
   //const n = parseInt(el('numPlayers').value, 10);
   //state.targetSets = Math.max(1, parseInt(el('targetSets').value, 10) || 1);
   //state.legsPerSet = Math.max(1, parseInt(el('legsPerSet').value, 10) || 1);
   //state.startingScore = Math.max(101, parseInt(el('startingScore').value, 10) || 501);
-  
 
   for (let i = 0; i < n; i++) {
     //const name = (el(`pname${i}`).value || `Speler ${i + 1}`).trim();
@@ -88,11 +86,11 @@ function startGame() {
         checkouts: 0,
       },
       dartsInCurrentLeg: 0,
-      visitScore: 0,                        // Temporary sum of current visit
-      dartsInLeg: 0,                        // Number of arrows thrown in the current leg
+      visitScore: 0, // Temporary sum of current visit
+      dartsInLeg: 0, // Number of arrows thrown in the current leg
       checkoutOptions: [],
-      lastThrows: ['---', '---', '---'],    // 3 slots for displaying throws
-      lastThrows: [],                       // Strings, e.g. ['T20','D20','S19']
+      lastThrows: ['---', '---', '---'], // 3 slots for displaying throws
+      lastThrows: [], // Strings, e.g. ['T20','D20','S19']
       lastVisit: 0,
       visitDist: {
         '0-19': 0,
@@ -104,7 +102,7 @@ function startGame() {
         '120-139': 0,
         '140-159': 0,
         '160-179': 0,
-        '180': 0,
+        180: 0,
       },
       bestLeg: null,
       highestCheckout: null,
@@ -120,10 +118,9 @@ function startGame() {
   state.matchOver = false;
   state.currentTurnHadCheckoutChance = false;
 
-  
-  el('setup').style.display = 'none';   // Hide the menu
-  el('game').style.display = 'block';   // Display the game
-  el('dartboard').style.display = 'block' // Display the board
+  el('setup').style.display = 'none'; // Hide the menu
+  el('game').style.display = 'block'; // Display the game
+  el('dartboard').style.display = 'block'; // Display the board
 
   // visit-score-distributie
 
@@ -153,77 +150,73 @@ function buildThrowButtons() {
     h.className = 'group';
     h.textContent = g.label;
     box.appendChild(h);
-    const i = document.createElement('div')
-    const j = document.createElement('div')
-    i.className = 'group-btns'
-    j.className = 'group-btns'
+    const i = document.createElement('div');
+    const j = document.createElement('div');
+    i.className = 'group-btns';
+    j.className = 'group-btns';
     let counter = 0;
     g.values.forEach((v) => {
       counter++;
       const b = document.createElement('button');
-      b.classList = "thrwBtn r8";
+      b.classList = 'thrwBtn r8';
       b.textContent = `${g.mult === 1 ? 'S' : g.mult === 2 ? 'D' : 'T'}${v}`;
-      b.setAttribute('data-text', b.textContent)
+      b.setAttribute('data-text', b.textContent);
       b.addEventListener('click', () => {
-        console.log(`g.mult = ${g.mult}`)
-        console.log(`v = ${v}`)
-        console.log(`b = ${b}`)
-        handleThrow(g.mult, v, b)
+        console.log(`g.mult = ${g.mult}`);
+        console.log(`v = ${v}`);
+        console.log(`b = ${b}`);
+        handleThrow(g.mult, v, b);
       });
       if (counter < 11) {
         i.appendChild(b);
       } else {
         j.appendChild(b);
       }
-      
     });
-    box.append(i)
-    box.append(j)
-
-
-
+    box.append(i);
+    box.append(j);
   });
   const h = document.createElement('div');
-  h.className = 'group-btns'
+  h.className = 'group-btns';
   const bullHeader = document.createElement('div');
   bullHeader.className = 'group';
   bullHeader.textContent = 'Bull & Miss';
   box.appendChild(bullHeader);
-  
+
   const s25 = document.createElement('button');
-  s25.classList = "thrwBtn r8";
+  s25.classList = 'thrwBtn r8';
   s25.textContent = 'S25';
-  s25.setAttribute('data-text', s25.textContent)
+  s25.setAttribute('data-text', s25.textContent);
   s25.addEventListener('click', () => handleThrow(1, 25, s25));
   // box.appendChild(s25);
-  h.append(s25)
+  h.append(s25);
   const d25 = document.createElement('button');
   d25.textContent = 'D25';
-  d25.setAttribute('data-text', d25.textContent)
-  d25.classList = "thrwBtn r8";
+  d25.setAttribute('data-text', d25.textContent);
+  d25.classList = 'thrwBtn r8';
   d25.addEventListener('click', () => handleThrow(2, 25, d25));
   // box.appendChild(d25);
-  h.append(d25)
+  h.append(d25);
 
   const miss = document.createElement('button');
   miss.textContent = 'Miss (0)';
-  miss.setAttribute('data-text', miss.textContent)
-  miss.classList = "thrwBtn r11 crimson";
+  miss.setAttribute('data-text', miss.textContent);
+  miss.classList = 'thrwBtn r11 crimson';
   miss.addEventListener('click', () => handleThrow(1, 0, miss));
- //  box.appendChild(miss);
-  h.append(miss)
+  //  box.appendChild(miss);
+  h.append(miss);
 
-  box.append(h)
+  box.append(h);
 
-  const board = document.getElementById('board')
+  const board = document.getElementById('board');
   board.addEventListener('click', (e) => {
     const id = e.target.id;
     const v = id.substring(1) || 0;
-    const m = id.substring(0,1) === 'D' ? 2 : id.substring(0,1) === 'T' ? 3 : 1;
-    console.log(`id = ${id}`)
-    console.log(`v = ${v}`)
-    console.log(`m = ${m}`)
-    handleThrow(m, v, null)
+    const m = id.substring(0, 1) === 'D' ? 2 : id.substring(0, 1) === 'T' ? 3 : 1;
+    console.log(`id = ${id}`);
+    console.log(`v = ${v}`);
+    console.log(`m = ${m}`);
+    handleThrow(m, v, null);
   });
 }
 
@@ -249,7 +242,7 @@ function nextPlayerIndex(i) {
 }
 
 function handleThrow(mult, value, btn) {
-  console.log(mult, value, btn)
+  console.log(mult, value, btn);
   if (state.matchOver) return;
 
   // Snapshot without history for Undo
@@ -300,7 +293,7 @@ function handleThrow(mult, value, btn) {
   // Update score
   p.score = after;
   log(`${p.name}: ${label} → ${before} ⇒ ${p.score}`);
-  
+
   p.checkoutOptions = getCheckoutOptions(p.score);
 
   if (!state.currentTurnHadCheckoutChance && p.score < 41 && p.score % 2 === 0 && p.score > 0 && state.dartsInTurn < 3) {
@@ -310,12 +303,11 @@ function handleThrow(mult, value, btn) {
   p.visitScore += points; // Add Score
   p.dartsInLeg += 1; // Add arrow thrown
 
-
   // Remaining score === 0 --> Leg finished
   if (after === 0) {
     // Darts thrown in leg
     let dartsToCheckout = p.dartsInCurrentLeg + state.currentTurnThrows.length;
-    
+
     endVisit({ visitScore: state.turnStartScore - after, dartsUsed: state.currentTurnThrows.length, busted: false, finished: true });
 
     handleLegWin(state.currentPlayer, before, dartsToCheckout);
@@ -334,9 +326,9 @@ function handleThrow(mult, value, btn) {
 
 function getCheckoutOptions(score) {
   if (CHECKOUTS[score]) {
-    return CHECKOUTS[score]
+    return CHECKOUTS[score];
   }
-  return
+  return;
 }
 
 function endVisit({ visitScore, dartsUsed, busted, finished }) {
@@ -475,9 +467,9 @@ function renderPlayersBoard() {
 
     let checkoutHTML = '';
     if (i === state.currentPlayer && p.checkoutOptions && p.checkoutOptions.length > 0) {
-      checkoutHTML = `<div id="cov" style="opacity: 1;">${p.checkoutOptions[0]}</div>`
+      checkoutHTML = `<div id="cov" style="opacity: 1;">${p.checkoutOptions[0]}</div>`;
     } else {
-      checkoutHTML = `<div id="cov" style="opacity: 0;">No checkout</div>`
+      checkoutHTML = `<div id="cov" style="opacity: 0;">No checkout</div>`;
     }
     d.innerHTML = `
       <div class="row" style="justify-content:space-between;align-items:center;">
@@ -573,7 +565,7 @@ function renderStats() {
         <th class="text-center">160-180</th>
       </tr>
     </thead>
-    `
+    `;
 
   const gsTbody = document.createElement('tbody');
   const rTbody = document.createElement('tbody');
@@ -585,7 +577,7 @@ function renderStats() {
     const a = avg3(p.stats.totalPoints, p.stats.totalDarts);
     const f9 = avg3(p.stats.firstNinePoints, p.stats.firstNineDarts);
     const co = pct(p.stats.checkouts, p.stats.checkoutAttempts);
-    
+
     gsTr.innerHTML = `
       <td class="">${p.name}</td>
       <td class="text-center">${a}</td>
@@ -594,34 +586,32 @@ function renderStats() {
       <td class="text-center">${p.highestCheckout !== null ? p.highestCheckout : '0'}</td>
       <td class="text-center">${p.bestLeg !== null ? p.bestLeg : '0'}</td>
       <td class="text-center">${p.stats.totalDarts}</td>`;
-    
-      gsTbody.appendChild(gsTr);
 
-    let tdName = document.createElement('td')
+    gsTbody.appendChild(gsTr);
+
+    let tdName = document.createElement('td');
     tdName.innerHTML = p.name;
     rTr.append(tdName);
     for (let [range, val] of Object.entries(p.visitDist)) {
       // console.log(range)
-      let td = document.createElement('td')
-      td.classList.add('text-center')
+      let td = document.createElement('td');
+      td.classList.add('text-center');
       td.innerHTML = val;
       rTr.append(td);
     }
 
     rTbody.appendChild(rTr);
-    
   });
   gsTable.appendChild(gsTbody);
   rTable.appendChild(rTbody);
-  
 }
 
 // Logging
 function log(msg) {
   const timestamp = new Date().toLocaleTimeString();
   if (!state.log || !Array.isArray(state.log)) state.log = [];
-  state.log.push({ ts: timestamp, msg })
-  
+  state.log.push({ ts: timestamp, msg });
+
   const div = el('log');
   if (!div) return;
   div.innerHTML = `[${timestamp}] ${msg}<br>` + div.innerHTML;
@@ -639,18 +629,18 @@ function renderLog() {
   }
 }
 
-document.getElementById('saveBtn').addEventListener('click', () => saveGame())
+document.getElementById('saveBtn').addEventListener('click', () => saveGame());
 document.getElementById('loadBtn').addEventListener('click', () => {
   document.getElementById('loadFile').click();
 });
 
-document.getElementById('loadFile').addEventListener('change' , (e) => {
+document.getElementById('loadFile').addEventListener('change', (e) => {
   if (e.target.files.length > 0) loadGame(e.target.files[0]);
-})
+});
 
-function saveGame(filename = "dart_save.json") {
+function saveGame(filename = 'dart_save.json') {
   const snapshot = JSON.stringify(state, null, 2);
-  const blob = new Blob([snapshot], { type: "application/json" });
+  const blob = new Blob([snapshot], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   // Temporary <a> element to download the file.
   const link = document.createElement('a');
@@ -673,5 +663,5 @@ function loadGame(file) {
     } catch (err) {
       console.error('Unable to load game:', err);
     }
-  }
+  };
 }
