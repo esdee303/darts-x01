@@ -1,9 +1,6 @@
-// index.js (vervang je huidige script door dit)
+// Helper function
+const el = (id) => document.getElementById(id);
 
-// helper
-const el = id => document.getElementById(id);
-
-const numbersAudio = ["0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46","47","48","49","50","51","52","53","54","55","56","57","58","59","60","61","62","63","64","65","66","67","68","69","70","71","72","73","74","75","76","77","78","79","80","81","82","83","84","85","86","87","88","89","90","91","92","93","94","95","96","97","98","99","100","101","102","103","104","105","106","107","108","109","110","111","112","113","114","115","116","117","118","119","120","121","122","123","124","125","126","127","128","129","130","131","132","133","134","135","136","137","138","139","140","141","142","143","144","145","146","147","148","149","150","151","152","153","154","155","156","157","158","159","160","161","162","163","164","165","166","167","168","169","170","171","172","173","174","175","176","177","178","179","180"]
 
 // ---------- STATE ----------
 const state = {
@@ -16,12 +13,12 @@ const state = {
   dartsInTurn: 0,
   turnStartScore: 501,
   currentTurnHadCheckoutChance: false,
-  currentTurnThrows: [], // objecten: {mult, value, points, label}
-  history: [], // snapshots (zonder history)
+  currentTurnThrows: [], // = objects: {mult, value, points, label}
+  history: [], // = Snapshots (without history)
   matchOver: false,
 };
 
-// deep clone maar ZONDER history -> voorkomt exponentiële groei
+// ? Deep clone without history --> to avoid exponential growth
 function deepClone(obj) {
   const clone = JSON.parse(JSON.stringify(obj));
   clone.history = [];
@@ -29,55 +26,54 @@ function deepClone(obj) {
 }
 
 // ---------- SETUP UI ----------
-function renderPlayerInputs(){
-  const n = parseInt(el('numPlayers').value,10);
+function renderPlayerInputs() {
+  const n = parseInt(el('numPlayers').value, 10);
   const box = el('playerInputs');
   box.innerHTML = '';
   for (let i = 0; i < n; i++) {
     const d = document.createElement('div');
-    d.innerHTML = `<label>Speler ${i+1}</label><input type="text" id="pname${i}" placeholder="Naam" value="">`;
+    d.innerHTML = `<label>Player ${i + 1}</label><input type="text" id="pname${i}" placeholder="Name" value="">`;
     box.appendChild(d);
   }
 }
 
-const numPlayers = 3;
-const targetSets = 3;
-const legsPerSet = 3;
-const startingScore = 501;
-const pnames = ['Steven', 'Marc', 'Nicolas'];
-
 el('numPlayers').addEventListener('change', renderPlayerInputs);
 renderPlayerInputs();
 
-el('demoBtn').addEventListener('click', ()=> {
-  const names = ['Speler A','Speler B','Speler C','Speler D'];
-  const n = parseInt(el('numPlayers').value,10);
+el('demoBtn').addEventListener('click', () => {
+  const names = ['Player A', 'Player B', 'Player C', 'Player D'];
+  const n = parseInt(el('numPlayers').value, 10);
   for (let i = 0; i < n; i++) el(`pname${i}`).value = names[i];
 });
 
-// start / nieuw / undo knoppen
+// Start / New / Undo buttons
 el('startBtn').addEventListener('click', startGame);
-el('newBtn').addEventListener('click', ()=> { location.reload(); });
+el('newBtn').addEventListener('click', () => {
+  location.reload();
+});
 el('undoBtn').addEventListener('click', undo);
 
-
-
-
 // ---------- GAME LOGIC ----------
+startGame()
 function startGame() {
   state.players = [];
-  const n = parseInt(el('numPlayers').value,10);
-  // const n = numPlayers;
-  state.targetSets = Math.max(1, parseInt(el('targetSets').value,10)||1);
-  // state.targetSets = targetSets;
-  state.legsPerSet = Math.max(1, parseInt(el('legsPerSet').value,10)||1);
-  // state.legsPerSet = legsPerSet;
-  state.startingScore = Math.max(101, parseInt(el('startingScore').value,10)||501);
-  // state.startingScore = 501;
+
+  // - Variables to bypass the Start menu
+   const n = 3;
+   state.targetSets = 5;
+   state.legsPerSet = 5;
+   state.startingScore = 501;
+   const pnames = ['Steven', 'Marc', 'Nicolas']
+
+  //const n = parseInt(el('numPlayers').value, 10);
+  //state.targetSets = Math.max(1, parseInt(el('targetSets').value, 10) || 1);
+  //state.legsPerSet = Math.max(1, parseInt(el('legsPerSet').value, 10) || 1);
+  //state.startingScore = Math.max(101, parseInt(el('startingScore').value, 10) || 501);
+  
 
   for (let i = 0; i < n; i++) {
-    const name = (el(`pname${i}`).value||`Speler ${i+1}`).trim();
-    // const name = (pnames[i] || `Speler ${i + 1}`).trim();
+    //const name = (el(`pname${i}`).value || `Speler ${i + 1}`).trim();
+    const name = (pnames[i] || `Speler ${i + 1}`).trim(); // - Variable to bypass the Start menu
     state.players.push({
       name,
       score: state.startingScore,
@@ -92,25 +88,26 @@ function startGame() {
         checkouts: 0,
       },
       dartsInCurrentLeg: 0,
-      visitScore: 0,  // Tijdelijke som van de huidige visit
-      dartsInLeg: 0, // Aantal pijlen gegooid in de lopende leg
-      lastThrows: ['---','---','---'], // 3 slots voor live-visitntPlayer = 0;
-      lastThrows: [], // strings zoals ['T20','D20','S19']
+      visitScore: 0,                        // Temporary sum of current visit
+      dartsInLeg: 0,                        // Number of arrows thrown in the current leg
+      checkoutOptions: [],
+      lastThrows: ['---', '---', '---'],    // 3 slots for displaying throws
+      lastThrows: [],                       // Strings, e.g. ['T20','D20','S19']
       lastVisit: 0,
       visitDist: {
-        "0-19": 0,
-        "20-39": 0,
-        "40-59": 0,
-        "60-79": 0,
-        "80-99": 0,
-        "100-119": 0,
-        "120-139": 0,
-        "140-159": 0,
-        "160-179": 0,
-        "180": 0
+        '0-19': 0,
+        '20-39': 0,
+        '40-59': 0,
+        '60-79': 0,
+        '80-99': 0,
+        '100-119': 0,
+        '120-139': 0,
+        '140-159': 0,
+        '160-179': 0,
+        '180': 0,
       },
       bestLeg: null,
-      highestCheckout: null
+      highestCheckout: null,
     });
   }
 
@@ -123,163 +120,236 @@ function startGame() {
   state.matchOver = false;
   state.currentTurnHadCheckoutChance = false;
 
-  el('setup').style.display='none';
-  el('game').style.display='block';
+  
+  el('setup').style.display = 'none';   // Hide the menu
+  el('game').style.display = 'block';   // Display the game
+  el('dartboard').style.display = 'block' // Display the board
 
   // visit-score-distributie
- 
 
-  buildThrowButtons(); // bouw knoppen met correcte id 'throwButtons'
+  buildThrowButtons(); // Bild buttons
   startTurn();
   renderAll();
-  
-  log(`Nieuw spel gestart • Sets: eerste tot ${state.targetSets}, Legs per set: eerste tot ${state.legsPerSet}, Begin: ${state.startingScore}`);
+
+  log(`Sets: first to ${state.targetSets}, Legs: first to ${state.legsPerSet}, Starting score: ${state.startingScore}`);
 }
 
-function buildThrowButtons(){
+function buildThrowButtons() {
   const box = el('throwButtons');
-  if(!box) {
-    console.error('Geen element met id "throwButtons" gevonden in de HTML.');
+  if (!box) {
+    console.error('No element found with id "throwButtons"');
     return;
   }
   box.innerHTML = '';
 
   const groups = [
-    { label: 'Singles', mult:1, values:[...Array(20).keys()].map(i=>i+1) },
-    { label: 'Doubles', mult:2, values:[...Array(20).keys()].map(i=>i+1) },
-    { label: 'Triples', mult:3, values:[...Array(20).keys()].map(i=>i+1) },
+    { label: 'Singles', mult: 1, values: [...Array(20).keys()].map((i) => i + 1) },
+    { label: 'Doubles', mult: 2, values: [...Array(20).keys()].map((i) => i + 1) },
+    { label: 'Triples', mult: 3, values: [...Array(20).keys()].map((i) => i + 1) },
   ];
 
-  groups.forEach(g=>{
-    const h = document.createElement('div'); h.className='group'; h.textContent = g.label; box.appendChild(h);
-    g.values.forEach(v=>{
+  groups.forEach((g) => {
+    const h = document.createElement('div');
+    h.className = 'group';
+    h.textContent = g.label;
+    box.appendChild(h);
+    const i = document.createElement('div')
+    const j = document.createElement('div')
+    i.className = 'group-btns'
+    j.className = 'group-btns'
+    let counter = 0;
+    g.values.forEach((v) => {
+      counter++;
       const b = document.createElement('button');
-      b.textContent = `${g.mult===1?'S':g.mult===2?'D':'T'}${v}`;
-      b.addEventListener('click', ()=> handleThrow(g.mult, v, b));
-      box.appendChild(b);
+      b.classList = "thrwBtn r8";
+      b.textContent = `${g.mult === 1 ? 'S' : g.mult === 2 ? 'D' : 'T'}${v}`;
+      b.setAttribute('data-text', b.textContent)
+      b.addEventListener('click', () => {
+        console.log(`g.mult = ${g.mult}`)
+        console.log(`v = ${v}`)
+        console.log(`b = ${b}`)
+        handleThrow(g.mult, v, b)
+      });
+      if (counter < 11) {
+        i.appendChild(b);
+      } else {
+        j.appendChild(b);
+      }
+      
     });
-  });
+    box.append(i)
+    box.append(j)
 
-  const bullHeader = document.createElement('div'); bullHeader.className='group'; bullHeader.textContent='Bull & Overig'; box.appendChild(bullHeader);
-  const s25 = document.createElement('button'); s25.textContent='S25 (Bull)'; s25.addEventListener('click', ()=> handleThrow(1,25,s25)); box.appendChild(s25);
-  const d25 = document.createElement('button'); d25.textContent='D25 (Bull)'; d25.addEventListener('click', ()=> handleThrow(2,25,d25)); box.appendChild(d25);
-  const miss = document.createElement('button'); miss.textContent='Miss (0)'; miss.addEventListener('click', ()=> handleThrow(1,0,miss)); box.appendChild(miss);
+
+
+  });
+  const h = document.createElement('div');
+  h.className = 'group-btns'
+  const bullHeader = document.createElement('div');
+  bullHeader.className = 'group';
+  bullHeader.textContent = 'Bull & Miss';
+  box.appendChild(bullHeader);
+  
+  const s25 = document.createElement('button');
+  s25.classList = "thrwBtn r8";
+  s25.textContent = 'S25';
+  s25.setAttribute('data-text', s25.textContent)
+  s25.addEventListener('click', () => handleThrow(1, 25, s25));
+  // box.appendChild(s25);
+  h.append(s25)
+  const d25 = document.createElement('button');
+  d25.textContent = 'D25';
+  d25.setAttribute('data-text', d25.textContent)
+  d25.classList = "thrwBtn r8";
+  d25.addEventListener('click', () => handleThrow(2, 25, d25));
+  // box.appendChild(d25);
+  h.append(d25)
+
+  const miss = document.createElement('button');
+  miss.textContent = 'Miss (0)';
+  miss.setAttribute('data-text', miss.textContent)
+  miss.classList = "thrwBtn r11 crimson";
+  miss.addEventListener('click', () => handleThrow(1, 0, miss));
+ //  box.appendChild(miss);
+  h.append(miss)
+
+  box.append(h)
+
+  const board = document.getElementById('board')
+  board.addEventListener('click', (e) => {
+    const id = e.target.id;
+    const v = id.substring(1) || 0;
+    const m = id.substring(0,1) === 'D' ? 2 : id.substring(0,1) === 'T' ? 3 : 1;
+    console.log(`id = ${id}`)
+    console.log(`v = ${v}`)
+    console.log(`m = ${m}`)
+    handleThrow(m, v, null)
+  });
 }
 
-function startTurn(){
+function startTurn() {
   const p = current();
   state.dartsInTurn = 0;
   state.currentTurnThrows = [];
   state.turnStartScore = p.score;
-  state.currentTurnHadCheckoutChance = (p.score <= 170 && p.score > 1);
-  // reset zichtbare laatste 3 worpen bij start van de beurt
-  p.lastThrows = ['---','---','---'];
+  p.lastThrows = ['---', '---', '---'];
   p.visitScore = 0;
-  
+  p.checkoutOptions = getCheckoutOptions(p.score);
+
+  // Checkout attempt true if remaining score < 41, even and > 0
+  state.currentTurnHadCheckoutChance = p.score < 41 && p.score % 2 === 0 && p.score > 0;
 }
 
 function current() {
   return state.players[state.currentPlayer];
-  
 }
 
-function nextPlayerIndex(i) { 
-  return (i+1) % state.players.length; 
+function nextPlayerIndex(i) {
+  return (i + 1) % state.players.length;
 }
 
-function handleThrow(mult, value, btn){
- 
-  if(state.matchOver) return;
+function handleThrow(mult, value, btn) {
+  console.log(mult, value, btn)
+  if (state.matchOver) return;
 
-  // snapshot nemen zonder history om undo mogelijk te maken zonder blowup
+  // Snapshot without history for Undo
   state.history.push(deepClone(state));
 
-  // UI highlight korte tijd
+  // UI Button highlight
   if (btn) {
     btn.classList.add('clicked');
     setTimeout(() => btn.classList.remove('clicked'), 500);
   }
 
   const p = current();
-  
+
   state.dartsInTurn += 1;
 
   const label = value === 0 ? 'XXX' : `${mult === 1 ? 'S' : mult === 2 ? 'D' : 'T'}${value}`;
   let points = value === 0 ? 0 : mult * value;
 
-  if(value === 25 && mult === 3) { 
-    points = 0; 
-  } // niet geldig in UI maar veilig afvangen
-
-
-
-  // vul volgende vrije span in (--- -> label)
-  if (!Array.isArray(p.lastThrows) || p.lastThrows.length !== 3) {
-    p.lastThrows = ['---','---','---'];
+  // Invalid throw (should not happen)
+  if (value === 25 && mult === 3) {
+    points = 0;
   }
-    
-  const _slot = p.lastThrows.findIndex(t => t === '---');
+
+  // Fill in the throw
+  if (!Array.isArray(p.lastThrows) || p.lastThrows.length !== 3) {
+    p.lastThrows = ['---', '---', '---'];
+  }
+
+  const _slot = p.lastThrows.findIndex((t) => t === '---');
   if (_slot !== -1) p.lastThrows[_slot] = label;
 
   const before = p.score;
   const after = before - points;
 
-  const finishedWithDouble = after===0 && mult===2; // D25 telt mee door mult===2 en value===25
-  const invalidFinish = after===0 && !finishedWithDouble;
-  const bust = (after < 0) || (after === 1) || invalidFinish;
+  const finishedWithDouble = after === 0 && mult === 2; // D25 telt mee door mult===2 en value===25
+  const invalidFinish = after === 0 && !finishedWithDouble;
+  const bust = after < 0 || after === 1 || invalidFinish;
 
-  state.currentTurnThrows.push({mult, value, points, label});
-  //  console.log(`state.currentTurnThrows = ${JSON.stringify(state.currentTurnThrows[0])}`)
-  //  console.log(`state.currentTurnThrows length = ${state.currentTurnThrows.length}`)
+  state.currentTurnThrows.push({ mult, value, points, label });
 
   if (bust) {
-    log(`${p.name}: ${label} → BUST (score blijft ${state.turnStartScore})`);
-    endVisit({ visitScore: 0, dartsUsed: state.currentTurnThrows.length, busted: true, finished:false });
+    log(`${p.name}: ${label} → BUST (score remains ${state.turnStartScore})`);
+    endVisit({ visitScore: 0, dartsUsed: state.currentTurnThrows.length, busted: true, finished: false });
     advanceTurn();
     return;
   }
 
-  // update score
+  // Update score
   p.score = after;
   log(`${p.name}: ${label} → ${before} ⇒ ${p.score}`);
+  
+  p.checkoutOptions = getCheckoutOptions(p.score);
 
-  p.visitScore += points;  // Score optellen binnen de visit
-  p.dartsInLeg += 1   // Aantal gegooide pijlen in de leg
+  if (!state.currentTurnHadCheckoutChance && p.score < 41 && p.score % 2 === 0 && p.score > 0 && state.dartsInTurn < 3) {
+    state.currentTurnHadCheckoutChance = true;
+  }
 
-  // console.log(`p.dartsInCurrentLeg = ${p.dartsInCurrentLeg}`)
-  // finish
+  p.visitScore += points; // Add Score
+  p.dartsInLeg += 1; // Add arrow thrown
+
+
+  // Remaining score === 0 --> Leg finished
   if (after === 0) {
-    let dartsToCheckout = p.dartsInCurrentLeg + state.currentTurnThrows.length
-    // console.log(dartsToCheckout);
-    // visite stats: bezoekpunt is turnStartScore - after (after==0)
-    endVisit({ visitScore: state.turnStartScore - after, dartsUsed: state.currentTurnThrows.length, busted:false, finished:true });
-    // handleLegWin(state.currentPlayer, before);
+    // Darts thrown in leg
+    let dartsToCheckout = p.dartsInCurrentLeg + state.currentTurnThrows.length;
     
-    handleLegWin(state.currentPlayer, before, dartsToCheckout)
+    endVisit({ visitScore: state.turnStartScore - after, dartsUsed: state.currentTurnThrows.length, busted: false, finished: true });
+
+    handleLegWin(state.currentPlayer, before, dartsToCheckout);
+
     return;
   }
 
-  // einde beurt na 3 darts
-  if(state.dartsInTurn === 3){
-    endVisit({ visitScore: state.turnStartScore - p.score, dartsUsed: state.currentTurnThrows.length, busted:false, finished:false });
+  // End visit (3 darts thrown)
+  if (state.dartsInTurn === 3) {
+    endVisit({ visitScore: state.turnStartScore - p.score, dartsUsed: state.currentTurnThrows.length, busted: false, finished: false });
     advanceTurn();
   }
 
   renderAll();
 }
 
-function endVisit({visitScore, dartsUsed, busted, finished}){
-  const p = current();
+function getCheckoutOptions(score) {
+  if (CHECKOUTS[score]) {
+    return CHECKOUTS[score]
+  }
+  return
+}
 
-  // sla laatste worpen op (strings)
-  // p.lastThrows = state.currentTurnThrows.map(t => t.label);
-  p.lastThrows = [...state.currentTurnThrows.map(t => t.label), '---', '---', '---'].slice(0,3);
+function endVisit({ visitScore, dartsUsed, busted, finished }) {
+  const p = current();
+  // document.getElementById(`cov-${p.name.toLowerCase()}`).style.opacity = 0;
+  // Save last throws, for display
+  p.lastThrows = [...state.currentTurnThrows.map((t) => t.label), '---', '---', '---'].slice(0, 3);
   p.lastVisit = visitScore;
 
-  // first nine logica: verdeel punten per dart gelijkmatig binnen de visit
+  // Count first 9
   const remainingForFirstNine = Math.max(0, 9 - p.dartsInCurrentLeg);
   const dartsToAddFN = Math.min(remainingForFirstNine, dartsUsed);
-  const pointsPerDartThisVisit = dartsUsed > 0 ? (visitScore / dartsUsed) : 0;
+  const pointsPerDartThisVisit = dartsUsed > 0 ? visitScore / dartsUsed : 0;
   const pointsToAddFN = dartsToAddFN * pointsPerDartThisVisit;
 
   p.stats.totalPoints += visitScore;
@@ -287,33 +357,31 @@ function endVisit({visitScore, dartsUsed, busted, finished}){
   p.stats.firstNinePoints += pointsToAddFN;
   p.stats.firstNineDarts += dartsToAddFN;
   p.dartsInCurrentLeg += dartsUsed;
-  
 
-  if(state.currentTurnHadCheckoutChance){
+  if (state.currentTurnHadCheckoutChance) {
     p.stats.checkoutAttempts += 1;
   }
-  if(finished){
+  if (finished) {
     p.stats.checkouts += 1;
   }
 
   let b = p.visitDist;
 
-  console.log(`audio/${numbersAudio[visitScore]}.wav`)
-  let audio = new Audio(`audio/${numbersAudio[visitScore]}.wav`);
-  audio.play();
+  // let audio = new Audio(`audio/${numbersAudio[visitScore]}.wav`);
+  // audio.play();
 
-  if (visitScore < 20) b["0-19"]++;
-  else if (visitScore < 40) b["20-39"]++;
-  else if (visitScore < 60) b["40-59"]++;
-  else if (visitScore < 80) b["60-79"]++;
-  else if (visitScore < 100) b["80-99"]++;
-  else if (visitScore < 120) b["100-119"]++;
-  else if (visitScore < 140) b["120-139"]++;
-  else if (visitScore < 160) b["140-159"]++;
-  else if (visitScore < 180) b["160-179"]++;
-  else if (visitScore === 180) b["180"]++;
+  if (visitScore < 20) b['0-19']++;
+  else if (visitScore < 40) b['20-39']++;
+  else if (visitScore < 60) b['40-59']++;
+  else if (visitScore < 80) b['60-79']++;
+  else if (visitScore < 100) b['80-99']++;
+  else if (visitScore < 120) b['100-119']++;
+  else if (visitScore < 140) b['120-139']++;
+  else if (visitScore < 160) b['140-159']++;
+  else if (visitScore < 180) b['160-179']++;
+  else if (visitScore === 180) b['180']++;
 
-  // reset bezoek
+  // Reset Visit
   state.dartsInTurn = 0;
   state.currentTurnThrows = [];
   state.turnStartScore = p.score;
@@ -326,65 +394,60 @@ function advanceTurn() {
   renderAll();
 }
 
-function handleLegWin(playerIndex, before, dartsToCheckout){
+function handleLegWin(playerIndex, before, dartsToCheckout) {
   const p = state.players[playerIndex];
   p.legs += 1;
-  log(`🏁 Leg voor ${p.name}`);
-  
-  console.log(`Best Leg: ${p.bestLeg}`)
-  console.log(`Darts in current leg: ${dartsToCheckout}`)
+  log(`🏁 Leg won by ${p.name}`);
 
-  if (p.bestLeg === null || dartsToCheckout < p.bestLeg) {
-    p.bestLeg = dartsToCheckout;
-  }
+  if (p.bestLeg === null || dartsToCheckout < p.bestLeg) p.bestLeg = dartsToCheckout;
 
-  if (p.highestCheckout === null || before > p.highestCheckout) {
-    p.highestCheckout = before;
-  }
+  if (p.highestCheckout === null || before > p.highestCheckout) p.highestCheckout = before;
 
   for (let player of state.players) {
     player.visitScore = 0;
     player.dartsInLeg = 0;
   }
 
-  if(p.legs >= state.legsPerSet){
+  if (p.legs >= state.legsPerSet) {
     p.sets += 1;
-    log(`🏆 Set voor ${p.name} (sets: ${p.sets})`);
-    // reset legs
-    state.players.forEach(pl => pl.legs = 0);
+    log(`🏆 Set won by ${p.name} (sets: ${p.sets})`);
+    // Reset Legs
+    state.players.forEach((pl) => (pl.legs = 0));
 
-    if(p.sets >= state.targetSets){
-      log(`🎉 MATCH gewonnen door ${p.name}!`);
+    if (p.sets >= state.targetSets) {
+      log(`🎉 MATCH won by ${p.name}!`);
       state.matchOver = true;
       renderAll();
       return;
     }
   }
 
+  // New leg: reset scores and darts in current Leg
+  state.players.forEach((pl) => {
+    pl.score = state.startingScore;
+    pl.dartsInCurrentLeg = 0;
+  });
 
-  // nieuwe leg: reset scores en dartsInCurrentLeg
-  state.players.forEach(pl => { pl.score = state.startingScore; pl.dartsInCurrentLeg = 0; });
-
-  // roteer starter
+  // Next Player
   state.startingPlayer = nextPlayerIndex(state.startingPlayer);
   state.currentPlayer = state.startingPlayer;
   startTurn();
   renderAll();
 }
 
-function undo(){
-  if(state.history.length===0) return;
+function undo() {
+  if (state.history.length === 0) return;
   const prev = state.history.pop();
-  // restore alles behalve history zelf
-  Object.keys(prev).forEach(k => {
-    if(k !== 'history') state[k] = prev[k];
+  // Restore everything except the history itself
+  Object.keys(prev).forEach((k) => {
+    if (k !== 'history') state[k] = prev[k];
   });
   log('↩️  Undo');
   renderAll();
 }
 
 // ---------- RENDER ----------
-function renderAll(){
+function renderAll() {
   renderMatchInfo();
   renderPlayersBoard();
   renderStats();
@@ -392,36 +455,30 @@ function renderAll(){
 }
 
 function renderMatchInfo() {
-  const starters = state.players.map((p,i) => `${i===state.startingPlayer?'➤ ':''}${p.name}`).join(' · ');
-  el('matchInfo').textContent = `Sets: eerste tot ${state.targetSets} • Legs per set: eerste tot ${state.legsPerSet} • Starter: ${state.players[state.startingPlayer]?.name || '-'} | Volgorde: ${starters}`;
+  const starters = state.players.map((p, i) => `${i === state.startingPlayer ? '➤ ' : ''}${p.name}`).join(' · ');
+  el('matchInfo').innerHTML = `Sets: <strong>First to ${state.targetSets}</strong>&nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;Legs: <strong>First to ${state.legsPerSet}</strong>`;
 }
 
 function renderPlayersBoard() {
   const box = el('playersBoard');
   box.innerHTML = '';
-  state.players.forEach((p,i) => {
+  state.players.forEach((p, i) => {
     const d = document.createElement('div');
     d.className = 'player-panel';
     if (i === state.currentPlayer && !state.matchOver) d.classList.add('current');
 
-    // bereken 3-dart gemiddelde
-    const avg = (p.stats.totalDarts === 0) ? '—' : ((p.stats.totalPoints / p.stats.totalDarts) * 3).toFixed(2);
+    // Calculate 3-dart AVG
+    const avg = p.stats.totalDarts === 0 ? '0.00' : ((p.stats.totalPoints / p.stats.totalDarts) * 3).toFixed(2);
 
-    // laatste worpen (toon maximaal 3)
-    // const last = p.lastThrows && p.lastThrows.length ? p.lastThrows.slice(0,3).join(' - ') : '---';
-    const last = p.lastThrows && p.lastThrows.length ? p.lastThrows.slice(0,3) : ['---', '---', '---'];
-    
-    
+    // Show last throws
+    const last = p.lastThrows && p.lastThrows.length ? p.lastThrows.slice(0, 3) : ['---', '---', '---'];
 
-/*    d.innerHTML = `
-      <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:6px">
-        <div class="pill"><strong>${p.name}</strong></div>
-        <div class="pill">Sets: <strong>${p.sets}</strong> · Legs: <strong>${p.legs}</strong></div>
-      </div>
-      <div class="score">${p.score}</div>
-      <div class="sub">Darts in beurt: ${i===state.currentPlayer?state.dartsInTurn:0} / 3</div>
-      <div class="sub" style="margin-top:8px">Laatste: ${last} · Laatste score: ${p.lastVisit} · Gemiddelde: ${avg}</div>
-    `;*/
+    let checkoutHTML = '';
+    if (i === state.currentPlayer && p.checkoutOptions && p.checkoutOptions.length > 0) {
+      checkoutHTML = `<div id="cov" style="opacity: 1;">${p.checkoutOptions[0]}</div>`
+    } else {
+      checkoutHTML = `<div id="cov" style="opacity: 0;">No checkout</div>`
+    }
     d.innerHTML = `
       <div class="row" style="justify-content:space-between;align-items:center;">
         <div class="pill player-name"><strong>${p.name}</strong></div>
@@ -434,16 +491,16 @@ function renderPlayersBoard() {
       </div>
       <div class="score">
         <div class="cur">
-          <div class="cur-h">Current</div>
+          <div class="cur-h">Score</div>
 				  <div class="cur-v" id="cur-v">${p.visitScore}</div>
         </div>
         <div class="arr">
-				  <div class="arr-h">Arrows</div>
+				  <div class="arr-h">Darts</div>
 				  <div class="arr-v" id="arr-v">${p.dartsInLeg}</div>
 			  </div>
         <div class="rem">
-          <div class="rem-h">Remain</div>
-				  <div class="rem-v" id="rem-v">${p.score}</div>
+          <div class="rem-h">Remaining</div>
+				  <div class="rem-v font-extrabold bg-clip-text text-transparent bg-gradient-to-tr from-yellow-600 via-yellow-300 to-yellow-100 leading" id="rem-v">${p.score}</div>
         </div>
       </div>
       <div class="sub">
@@ -457,77 +514,164 @@ function renderPlayersBoard() {
           <div class="player-avg-set">${avg}</div>
         </div>
       </div>
+      <div class="co">
+        ${checkoutHTML}
+      </div>
       `;
     box.appendChild(d);
   });
 }
 
-function renderTurnLabel(){
+function renderTurnLabel() {
   const p = current();
-  el('turnLabel').textContent = `${p.name} (score ${p.score})`;
+  // el('turnLabel').textContent = `${p.name} (score ${p.score})`;
+  el('turnLabel').textContent = `${p.name}`;
 }
 
-function avg3(totalPoints,totalDarts){
-  if(totalDarts===0) return '—';
-  return ( (totalPoints / totalDarts) * 3 ).toFixed(2);
+// Calcualte 3-dart AVG
+function avg3(totalPoints, totalDarts) {
+  if (totalDarts === 0) return '0.00';
+  return ((totalPoints / totalDarts) * 3).toFixed(2);
 }
 
-function pct(a,b){ if(b===0) return '—'; return (100*a/b).toFixed(1)+'%'; }
+// Calculate checkout %
+function pct(a, b) {
+  if (b === 0) return '—';
+  return ((100 * a) / b).toFixed(1) + '%';
+}
 
-function renderStats(){
-  const t = el('statsTable');
-  t.innerHTML = `
-    <tr>
-      <th>Speler</th>
-      <th>AVG (3-dart)</th>
-      <th>First 9</th>
-      <th>Checkout</th>
-      <th>Max. Checkout</th>
-      <th>Best Leg</th>
-      <th>Total Darts</th>
-      <th>180</th>
-      <th>< 20</th>
-      <th>< 40</th>
-      <th>< 60</th>
-      <th>< 80</th>
-      <th>< 100</th>
-      <th>< 120</th>
-      <th>< 140</th>
-      <th>< 160</th>
-      <th>< 180</th>
-    </tr>`;
-  state.players.forEach(p=>{
+function renderStats() {
+  const gsTable = el('generalStatsTable');
+  const rTable = el('rangeStatsTable');
+
+  gsTable.innerHTML = `
+    <thead class="">
+      <tr>
+        <th class="text-left">Player</th>
+        <th class="text-center">3-dart AVG</th>
+        <th class="text-center">First 9</th>
+        <th class="text-center">Checkout</th>
+        <th class="text-center">Max. Checkout</th>
+        <th class="text-center">Best Leg</th>
+        <th class="text-center">Total Darts</th>
+      </tr>
+    </thead>`;
+
+  rTable.innerHTML = `
+    <thead>
+      <tr>
+        <th class="text-left">Player</th>
+        <th class="text-center">180</th>
+        <th class="text-center">0-20</th>
+        <th class="text-center">20-40</th>
+        <th class="text-center">40-60</th>
+        <th class="text-center">60-80</th>
+        <th class="text-center">80-100</th>
+        <th class="text-center">100-120</th>
+        <th class="text-center">120-140</th>
+        <th class="text-center">140-160</th>
+        <th class="text-center">160-180</th>
+      </tr>
+    </thead>
+    `
+
+  const gsTbody = document.createElement('tbody');
+  const rTbody = document.createElement('tbody');
+
+  state.players.forEach((p) => {
+    const gsTr = document.createElement('tr');
+    const rTr = document.createElement('tr');
+
     const a = avg3(p.stats.totalPoints, p.stats.totalDarts);
     const f9 = avg3(p.stats.firstNinePoints, p.stats.firstNineDarts);
     const co = pct(p.stats.checkouts, p.stats.checkoutAttempts);
-    const tr = document.createElement('tr');
-    let tds = [];
     
-    tr.innerHTML = `
-      <td>${p.name}</td>
-      <td style="text-align: center;">${a}</td>
-      <td style="text-align: center;">${f9}</td>
-      <td>${p.stats.checkouts} / ${p.stats.checkoutAttempts} (${co})</td>
-      <td style="text-align: center;">${p.highestCheckout !== null ? p.highestCheckout : '-'}</td>
-      <td style="text-align: center;">${p.bestLeg !== null ? p.bestLeg : '-'}</td>
-      <td style="text-align: center;">${p.stats.totalDarts}</td>`;
+    gsTr.innerHTML = `
+      <td class="">${p.name}</td>
+      <td class="text-center">${a}</td>
+      <td class="text-center">${f9}</td>
+      <td class="text-center">${p.stats.checkouts} / ${p.stats.checkoutAttempts} (${co})</td>
+      <td class="text-center">${p.highestCheckout !== null ? p.highestCheckout : '0'}</td>
+      <td class="text-center">${p.bestLeg !== null ? p.bestLeg : '0'}</td>
+      <td class="text-center">${p.stats.totalDarts}</td>`;
     
+      gsTbody.appendChild(gsTr);
+
+    let tdName = document.createElement('td')
+    tdName.innerHTML = p.name;
+    rTr.append(tdName);
     for (let [range, val] of Object.entries(p.visitDist)) {
       // console.log(range)
       let td = document.createElement('td')
-      td.style.textAlign = 'center';
+      td.classList.add('text-center')
       td.innerHTML = val;
-      tr.append(td);
+      rTr.append(td);
     }
+
+    rTbody.appendChild(rTr);
     
-    t.appendChild(tr);
   });
+  gsTable.appendChild(gsTbody);
+  rTable.appendChild(rTbody);
+  
 }
 
-// logging
-function log(msg){
-  const div = el('log');
+// Logging
+function log(msg) {
   const timestamp = new Date().toLocaleTimeString();
+  if (!state.log || !Array.isArray(state.log)) state.log = [];
+  state.log.push({ ts: timestamp, msg })
+  
+  const div = el('log');
+  if (!div) return;
   div.innerHTML = `[${timestamp}] ${msg}<br>` + div.innerHTML;
 }
 
+function renderLog() {
+  const div = el('log');
+  if (!div) return;
+  div.innerHTML = '';
+  if (!state.log || !Array.isArray(state.log) || state.log.length === 0) return;
+  for (let i = state.log.length - 1; i >= 0; i--) {
+    const e = state.log[i];
+    const ts = e.ts || new Date().toLocaleTimeString();
+    div.innerHTML += `[${ts}] ${e.msg}<br>`;
+  }
+}
+
+document.getElementById('saveBtn').addEventListener('click', () => saveGame())
+document.getElementById('loadBtn').addEventListener('click', () => {
+  document.getElementById('loadFile').click();
+});
+
+document.getElementById('loadFile').addEventListener('change' , (e) => {
+  if (e.target.files.length > 0) loadGame(e.target.files[0]);
+})
+
+function saveGame(filename = "dart_save.json") {
+  const snapshot = JSON.stringify(state, null, 2);
+  const blob = new Blob([snapshot], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  // Temporary <a> element to download the file.
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function loadGame(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const loadedState = JSON.parse(e.target.result);
+      Object.assign(state, loadedState); // Overwrite state
+      renderAll();
+      renderLog();
+    } catch (err) {
+      console.error('Unable to load game:', err);
+    }
+  }
+}
