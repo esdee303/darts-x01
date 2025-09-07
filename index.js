@@ -622,6 +622,7 @@ function renderLog() {
   if (!div) return;
   div.innerHTML = '';
   if (!state.log || !Array.isArray(state.log) || state.log.length === 0) return;
+  // state.log is chronical; show newest first to match previous behavior
   for (let i = state.log.length - 1; i >= 0; i--) {
     const e = state.log[i];
     const ts = e.ts || new Date().toLocaleTimeString();
@@ -629,39 +630,80 @@ function renderLog() {
   }
 }
 
-document.getElementById('saveBtn').addEventListener('click', () => saveGame());
-document.getElementById('loadBtn').addEventListener('click', () => {
-  document.getElementById('loadFile').click();
-});
-
-document.getElementById('loadFile').addEventListener('change', (e) => {
-  if (e.target.files.length > 0) loadGame(e.target.files[0]);
-});
+// ---------- SAVE GAME ----------
+const saveBtn = document.getElementById('saveBtn');
+saveBtn.addEventListener('click', () => saveGame());
 
 function saveGame(filename = 'dart_save.json') {
+  const date = new Date();
+  const year = date.getFullYear().toString();
+  const month = date.getMonth() + 1 < 10 ? `0${(date.getMonth() + 1).toString()}` : (date.getMonth() + 1).toString();
+  const day = date.getDate() < 10 ? `0${date.getDate().toString()}` : date.getDate().toString();
+  const hours = date.getHours() < 10 ? `0${date.getHours().toString()}` : date.getHours().toString();
+  const minutes = date.getMinutes() < 10 ? `0${date.getMinutes().toString()}` : date.getMinutes().toString();
+  const seconds = date.getSeconds() < 10 ? `0${date.getSeconds().toString()}` : date.getSeconds().toString();
+  const milliseconds = date.getMilliseconds() < 10 ? `0${date.getMilliseconds().toString()}` : date.getMilliseconds().toString();
+  filename = `${year}${month}${day}${hours}${minutes}${seconds}${milliseconds}.json`;
+  console.log(filename);
+
   const snapshot = JSON.stringify(state, null, 2);
+  console.log(snapshot);
   const blob = new Blob([snapshot], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   // Temporary <a> element to download the file.
   const link = document.createElement('a');
   link.href = url;
   link.download = filename;
+  console.log(link);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
 
-function loadGame(file) {
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const loadedState = JSON.parse(e.target.result);
-      Object.assign(state, loadedState); // Overwrite state
-      renderAll();
-      renderLog();
-    } catch (err) {
-      console.error('Unable to load game:', err);
-    }
-  };
+// ---------- LOAD GAME ----------
+const reader = new FileReader();
+
+const loadFileInput = document.getElementById('loadFile');
+loadFileInput.addEventListener('change', handleSelected)
+
+const loadBtn = document.getElementById('loadBtn');
+loadBtn.addEventListener('click', () => loadFileInput.click());
+
+function handleEvent(event) {
+   log(`${event.type}: ${event.loaded} bytes transferred`);
+   if (event.type === 'load') {
+    log(reader.result);
+    console.log(JSON.parse(reader.result))
+    applyLoadedState(JSON.parse(reader.result))
+   }
+
+   if (event.type === 'loadend') {
+    log(reader.result);
+   }
+}
+
+function addListeners(reader) {
+  reader.addEventListener('loadstart', handleEvent)
+  reader.addEventListener('load', handleEvent)
+  reader.addEventListener('loadend', handleEvent)
+  reader.addEventListener('progress', handleEvent)
+  reader.addEventListener('error', handleEvent)
+  reader.addEventListener('abort', handleEvent)
+}
+
+function handleSelected(e) {
+  const selectedFile = loadFileInput.files[0];
+  if (selectedFile) {
+    addListeners(reader);
+    reader.readAsText(selectedFile);
+  }
+}
+
+function applyLoadedState(loaded) {
+  // Delete all existing keys in state
+  Object.keys(state).forEach((k) => delete state[k]);
+  Object.assign(state, loaded);
+  renderAll();
+  renderLog();
 }
